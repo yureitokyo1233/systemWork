@@ -1,0 +1,188 @@
+package com.mycompany.system;
+
+import javax.swing.*;
+import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+
+public class System extends JFrame {
+
+    private final JTextField empIdField = new JTextField();
+    private final JTextField nameField = new JTextField();
+    private final JTextField ageField = new JTextField();
+    private final JTextField emailField = new JTextField();
+    private final JTextField hireDateField = new JTextField();
+    private final JTextField statusField = new JTextField();
+    private final JTextField positionField = new JTextField();
+    private final JTextField taxRateField = new JTextField();
+    private final JTextField salaryField = new JTextField();
+
+    private final JTable table;
+    private final DefaultTableModel tableModel;
+
+    private final JButton insertBtn = new JButton("Insert");
+    private final JButton updateBtn = new JButton("Update");
+    private final JButton deleteBtn = new JButton("Delete");
+    private final JButton totalEmployeesBtn = new JButton("Total Employees");
+    private final JLabel avatarLabel = new JLabel();
+    private final JPanel formPanel = new JPanel();
+    private final JScrollPane scrollPane;
+    private final JLabel titleLabel;
+
+    public System() {
+        setTitle("Employee Management System");
+        setMinimumSize(new Dimension(850, 600));
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(null);
+
+        titleLabel = new JLabel("Employee Management System", SwingConstants.CENTER);
+        titleLabel.setBounds(0, 0, 850, 40);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        titleLabel.setOpaque(true);
+        titleLabel.setBackground(new Color(0, 102, 204));
+        titleLabel.setForeground(Color.WHITE);
+        add(titleLabel);
+
+        formPanel.setLayout(null);
+        formPanel.setBounds(20, 60, 550, 250);
+        formPanel.setBorder(new TitledBorder("Employee Details"));
+        add(formPanel);
+
+        // Labels + Fields directly added to formPanel
+        int spacingY = 30;
+        int leftX = 10;
+        int rightX = 280;
+        int labelWidth = 100;
+        int fieldWidth = 150;
+
+        addLabelAndField(formPanel, "EmplyID:", empIdField, leftX, 20, labelWidth, fieldWidth);
+        addLabelAndField(formPanel, "Name:", nameField, leftX, 20 + spacingY, labelWidth, fieldWidth);
+        addLabelAndField(formPanel, "Age:", ageField, leftX, 20 + spacingY * 2, labelWidth, fieldWidth);
+        addLabelAndField(formPanel, "Email:", emailField, leftX, 20 + spacingY * 3, labelWidth, fieldWidth);
+        addLabelAndField(formPanel, "Hire Date:", hireDateField, leftX, 20 + spacingY * 4, labelWidth, fieldWidth);
+
+        addLabelAndField(formPanel, "Status:", statusField, rightX, 20, labelWidth, fieldWidth);
+        addLabelAndField(formPanel, "Position:", positionField, rightX, 20 + spacingY, labelWidth, fieldWidth);
+        addLabelAndField(formPanel, "Tax Rate:", taxRateField, rightX, 20 + spacingY * 2, labelWidth, fieldWidth);
+        addLabelAndField(formPanel, "Salary:", salaryField, rightX, 20 + spacingY * 3, labelWidth, fieldWidth);
+
+        totalEmployeesBtn.setBounds(rightX + 50, 20 + spacingY * 4, 150, 25);
+        formPanel.add(totalEmployeesBtn);
+
+        insertBtn.setBounds(120, 320, 100, 30);
+        updateBtn.setBounds(240, 320, 100, 30);
+        deleteBtn.setBounds(360, 320, 100, 30);
+
+        add(insertBtn);
+        add(updateBtn);
+        add(deleteBtn);
+
+        ImageIcon avatar = new ImageIcon("nigga.jpg");
+        avatarLabel.setIcon(new ImageIcon(avatar.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH)));
+        avatarLabel.setBounds(600, 70, 150, 150);
+        add(avatarLabel);
+
+        String[] columns = {"EmpId", "Name", "Age", "Email", "Status", "Position", "Tax_Rate", "Salary", "HireDate"};
+        tableModel = new DefaultTableModel(columns, 0);
+        table = new JTable(tableModel);
+        scrollPane = new JScrollPane(table);
+        scrollPane.setBounds(20, 370, 800, 180);
+        add(scrollPane);
+
+        insertBtn.addActionListener(e -> {
+            String[] data = {
+                empIdField.getText(), nameField.getText(), ageField.getText(),
+                emailField.getText(), statusField.getText(), positionField.getText(),
+                taxRateField.getText(), salaryField.getText(), hireDateField.getText()
+            };
+            tableModel.addRow(data);
+            clearFields();
+        });
+
+        updateBtn.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow >= 0) {
+                tableModel.setValueAt(empIdField.getText(), selectedRow, 0);
+                tableModel.setValueAt(nameField.getText(), selectedRow, 1);
+                tableModel.setValueAt(ageField.getText(), selectedRow, 2);
+                tableModel.setValueAt(emailField.getText(), selectedRow, 3);
+                tableModel.setValueAt(statusField.getText(), selectedRow, 4);
+                tableModel.setValueAt(positionField.getText(), selectedRow, 5);
+                tableModel.setValueAt(taxRateField.getText(), selectedRow, 6);
+                tableModel.setValueAt(salaryField.getText(), selectedRow, 7);
+                tableModel.setValueAt(hireDateField.getText(), selectedRow, 8);
+                clearFields();
+            }
+        });
+
+        deleteBtn.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow >= 0) {
+                tableModel.removeRow(selectedRow);
+                clearFields();
+            }
+        });
+
+        table.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                int selectedRow = table.getSelectedRow();
+                if (selectedRow >= 0) {
+                    empIdField.setText(tableModel.getValueAt(selectedRow, 0).toString());
+                    nameField.setText(tableModel.getValueAt(selectedRow, 1).toString());
+                    ageField.setText(tableModel.getValueAt(selectedRow, 2).toString());
+                    emailField.setText(tableModel.getValueAt(selectedRow, 3).toString());
+                    statusField.setText(tableModel.getValueAt(selectedRow, 4).toString());
+                    positionField.setText(tableModel.getValueAt(selectedRow, 5).toString());
+                    taxRateField.setText(tableModel.getValueAt(selectedRow, 6).toString());
+                    salaryField.setText(tableModel.getValueAt(selectedRow, 7).toString());
+                    hireDateField.setText(tableModel.getValueAt(selectedRow, 8).toString());
+                }
+            }
+        });
+
+        totalEmployeesBtn.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "Total Employees: " + tableModel.getRowCount());
+        });
+
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                int width = getWidth();
+                int height = getHeight();
+
+                titleLabel.setSize(width, 40);
+                scrollPane.setSize(width - 40, height - 420);
+                scrollPane.setLocation(20, height - scrollPane.getHeight() - 40);
+            }
+        });
+    }
+
+    private void addLabelAndField(JPanel panel, String label, JTextField field, int x, int y, int labelWidth, int fieldWidth) {
+        JLabel lbl = new JLabel(label);
+        lbl.setBounds(x, y, labelWidth, 25);
+        field.setBounds(x + labelWidth + 5, y, fieldWidth, 25);
+        panel.add(lbl);
+        panel.add(field);
+    }
+
+    private void clearFields() {
+        empIdField.setText("");
+        nameField.setText("");
+        ageField.setText("");
+        emailField.setText("");
+        hireDateField.setText("");
+        statusField.setText("");
+        positionField.setText("");
+        taxRateField.setText("");
+        salaryField.setText("");
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            System frame = new System();
+            frame.setVisible(true);
+        });
+    }
+}
