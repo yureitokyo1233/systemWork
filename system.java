@@ -1,13 +1,15 @@
-package org.example;
+
+package companySystem;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 public class System extends JFrame {
 
@@ -33,6 +35,16 @@ public class System extends JFrame {
     private final JScrollPane scrollPane;
     private final JLabel titleLabel;
 
+    // Weekday checkboxes
+    private final JCheckBox[] weekdayChecks = {
+        new JCheckBox("Sun"), new JCheckBox("Mon"), new JCheckBox("Tue"),
+        new JCheckBox("Wed"), new JCheckBox("Thu"), new JCheckBox("Fri"), new JCheckBox("Sat")
+    };
+
+    // Color picker
+    private final JButton colorBtn = new JButton("Pick Color");
+    private Color selectedColor = Color.RED; // Default
+
     public System() {
         setTitle("Employee Management System");
         setMinimumSize(new Dimension(850, 600));
@@ -51,7 +63,8 @@ public class System extends JFrame {
         add(tabbedPane, BorderLayout.CENTER);
 
         JPanel viewPanel = new JPanel(null);
-        String[] columns = {"EmpId", "Name", "Age", "Email", "Status", "Position", "Tax_Rate", "Salary", "HireDate"};
+        // Add AvailableDays and Color columns
+        String[] columns = {"EmpId", "Name", "Age", "Email", "Status", "Position", "Tax_Rate", "Salary", "HireDate", "AvailableDays", "Color"};
         tableModel = new DefaultTableModel(columns, 0);
         table = new JTable(tableModel);
         scrollPane = new JScrollPane(table);
@@ -81,6 +94,27 @@ public class System extends JFrame {
         addLabelAndField(formPanel, "Position:", positionField, rightX, 20 + spacingY, labelWidth, fieldWidth);
         addLabelAndField(formPanel, "Tax Rate:", taxRateField, rightX, 20 + spacingY * 2, labelWidth, fieldWidth);
         addLabelAndField(formPanel, "Salary:", salaryField, rightX, 20 + spacingY * 3, labelWidth, fieldWidth);
+
+       
+        JPanel daysPanel = new JPanel();
+        daysPanel.setBounds(10, 170, 420, 30);
+        for (JCheckBox cb : weekdayChecks) daysPanel.add(cb);
+        formPanel.add(daysPanel);
+
+       
+        colorBtn.setBounds(440, 170, 100, 30);
+        colorBtn.setBackground(selectedColor);
+        colorBtn.setOpaque(true);
+        colorBtn.setBorderPainted(false);
+        formPanel.add(colorBtn);
+
+        colorBtn.addActionListener(e -> {
+            Color c = JColorChooser.showDialog(this, "Choose Employee Color", selectedColor);
+            if (c != null) {
+                selectedColor = c;
+                colorBtn.setBackground(selectedColor);
+            }
+        });
 
         insertBtn.setBounds(120, 290, 100, 30);
         updateBtn.setBounds(240, 290, 100, 30);
@@ -127,7 +161,7 @@ public class System extends JFrame {
                 try {
                     totalSalary += Double.parseDouble(tableModel.getValueAt(i, 7).toString());
                 } catch (NumberFormatException ex) {
-                    // skip
+                    
                 }
             }
             totalEmployeesField.setText(String.valueOf(totalEmployees));
@@ -136,18 +170,26 @@ public class System extends JFrame {
 
         tabbedPane.addTab("Summary", summaryPanel);
 
-        // ADD CALENDAR TAB
+        // CALENDAR TAB
         CalendarPanel calendarPanel = new CalendarPanel(tableModel);
         tabbedPane.addTab("Calendar", calendarPanel);
 
         insertBtn.addActionListener(e -> {
+            StringBuilder days = new StringBuilder();
+            for (int i = 0; i < 7; i++) if (weekdayChecks[i].isSelected()) days.append(i).append(",");
+            String availableDays = days.toString();
+            String colorHex = "#" + Integer.toHexString(selectedColor.getRGB()).substring(2);
+            String availableDaysDisplay = getDayNames(availableDays);
             String[] data = {
-                    empIdField.getText(), nameField.getText(), ageField.getText(),
-                    emailField.getText(), statusField.getText(), positionField.getText(),
-                    taxRateField.getText(), salaryField.getText(), hireDateField.getText()
+                empIdField.getText(), nameField.getText(), ageField.getText(),
+                emailField.getText(), statusField.getText(), positionField.getText(),
+                taxRateField.getText(), salaryField.getText(), hireDateField.getText(), availableDaysDisplay, colorHex
             };
             tableModel.addRow(data);
             clearFields();
+            for (JCheckBox cb : weekdayChecks) cb.setSelected(false);
+            selectedColor = Color.RED;
+            colorBtn.setBackground(selectedColor);
             calendarPanel.refreshCalendar();
         });
 
@@ -163,7 +205,17 @@ public class System extends JFrame {
                 tableModel.setValueAt(taxRateField.getText(), selectedRow, 6);
                 tableModel.setValueAt(salaryField.getText(), selectedRow, 7);
                 tableModel.setValueAt(hireDateField.getText(), selectedRow, 8);
+                StringBuilder days = new StringBuilder();
+                for (int i = 0; i < 7; i++) if (weekdayChecks[i].isSelected()) days.append(i).append(",");
+                String availableDays = days.toString();
+                String availableDaysDisplay = getDayNames(availableDays);
+                tableModel.setValueAt(availableDaysDisplay, selectedRow, 9);
+                String colorHex = "#" + Integer.toHexString(selectedColor.getRGB()).substring(2);
+                tableModel.setValueAt(colorHex, selectedRow, 10);
                 clearFields();
+                for (JCheckBox cb : weekdayChecks) cb.setSelected(false);
+                selectedColor = Color.RED;
+                colorBtn.setBackground(selectedColor);
                 calendarPanel.refreshCalendar();
             }
         });
@@ -173,6 +225,9 @@ public class System extends JFrame {
             if (selectedRow >= 0) {
                 tableModel.removeRow(selectedRow);
                 clearFields();
+                for (JCheckBox cb : weekdayChecks) cb.setSelected(false);
+                selectedColor = Color.RED;
+                colorBtn.setBackground(selectedColor);
                 calendarPanel.refreshCalendar();
             }
         });
@@ -190,9 +245,44 @@ public class System extends JFrame {
                     taxRateField.setText(tableModel.getValueAt(selectedRow, 6).toString());
                     salaryField.setText(tableModel.getValueAt(selectedRow, 7).toString());
                     hireDateField.setText(tableModel.getValueAt(selectedRow, 8).toString());
+                    for (JCheckBox cb : weekdayChecks) cb.setSelected(false);
+                    String daysStr = "";
+                    try { daysStr = tableModel.getValueAt(selectedRow, 9).toString(); } catch (Exception ignored) {}
+                 
+                    for (String d : daysStr.split(",")) {
+                        int idx = getDayIndex(d.trim());
+                        if (idx != -1) weekdayChecks[idx].setSelected(true);
+                    }
+                    String colorHex = "#FF0000";
+                    try { colorHex = tableModel.getValueAt(selectedRow, 10).toString(); } catch (Exception ignored) {}
+                    try { selectedColor = Color.decode(colorHex); } catch (Exception ex) { selectedColor = Color.RED; }
+                    colorBtn.setBackground(selectedColor);
                 }
             }
         });
+    }
+
+    
+    private String getDayNames(String daysStr) {
+        String[] dayNames = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+        StringBuilder sb = new StringBuilder();
+        for (String d : daysStr.split(",")) {
+            if (!d.isEmpty()) {
+                int idx = Integer.parseInt(d);
+                if (sb.length() > 0) sb.append(",");
+                sb.append(dayNames[idx]);
+            }
+        }
+        return sb.toString();
+    }
+
+   
+    private int getDayIndex(String dayName) {
+        String[] dayNames = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+        for (int i = 0; i < dayNames.length; i++) {
+            if (dayNames[i].equalsIgnoreCase(dayName)) return i;
+        }
+        return -1;
     }
 
     private void addLabelAndField(JPanel panel, String label, JTextField field, int x, int y, int labelWidth, int fieldWidth) {
@@ -223,7 +313,7 @@ public class System extends JFrame {
     }
 }
 
-// CalendarPanel class (you can place this below the System class or in a separate file)
+
 class CalendarPanel extends JPanel {
     private final DefaultTableModel tableModel;
     private final JLabel monthLabel = new JLabel("", SwingConstants.CENTER);
@@ -274,35 +364,73 @@ class CalendarPanel extends JPanel {
             calendarGrid.add(new JLabel());
 
         int daysInMonth = month.length(Year.isLeap(year));
-        Set<Integer> dotDays = getEmployeeDays(currentMonth);
+        Map<Integer, List<Color>> dayColorMap = getAvailableDaysWithColors(currentMonth);
 
         for (int day = 1; day <= daysInMonth; day++) {
+            final int thisDay = day;
+            JPanel cell = new JPanel() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    List<Color> colors = dayColorMap.getOrDefault(thisDay, new ArrayList<>());
+                    int dotSize = 8;
+                    int spacing = 2;
+                    int totalWidth = colors.size() * dotSize + (colors.size() - 1) * spacing;
+                    int startX = (getWidth() - totalWidth) / 2;
+                    int y = getHeight() - dotSize - 6;
+                    for (int i = 0; i < colors.size(); i++) {
+                        g.setColor(colors.get(i));
+                        g.fillOval(startX + i * (dotSize + spacing), y, dotSize, dotSize);
+                        g.setColor(Color.BLACK);
+                        g.drawOval(startX + i * (dotSize + spacing), y, dotSize, dotSize);
+                    }
+                }
+            };
+            cell.setLayout(new BorderLayout());
             JLabel label = new JLabel(String.valueOf(day), SwingConstants.CENTER);
-            label.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-            if (dotDays.contains(day)) {
-                label.setText("<html><center>" + day + "<br>•</center></html>");
-                label.setForeground(Color.RED);
-            }
-            calendarGrid.add(label);
+            cell.add(label, BorderLayout.CENTER);
+            cell.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+            calendarGrid.add(cell);
         }
 
         calendarGrid.revalidate();
         calendarGrid.repaint();
     }
 
-    private Set<Integer> getEmployeeDays(LocalDate monthDate) {
-        Set<Integer> days = new HashSet<>();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+   
+    private Map<Integer, List<Color>> getAvailableDaysWithColors(LocalDate monthDate) {
+        Map<Integer, List<Color>> dayColorMap = new HashMap<>();
+        int daysInMonth = monthDate.lengthOfMonth();
         for (int i = 0; i < tableModel.getRowCount(); i++) {
-            String hireDateStr = tableModel.getValueAt(i, 8).toString();
-            try {
-                LocalDate hireDate = LocalDate.parse(hireDateStr, formatter);
-                if (hireDate.getYear() == monthDate.getYear() && hireDate.getMonth() == monthDate.getMonth()) {
-                    days.add(hireDate.getDayOfMonth());
+            String availableDays = "";
+            String colorHex = "#FF0000";
+            try { availableDays = tableModel.getValueAt(i, 9).toString(); } catch (Exception ignored) {}
+            try { colorHex = tableModel.getValueAt(i, 10).toString(); } catch (Exception ignored) {}
+            Color empColor;
+            try { empColor = Color.decode(colorHex); } catch (Exception ex) { empColor = Color.RED; }
+           
+            for (String d : availableDays.split(",")) {
+                int weekday = getDayIndex(d.trim());
+                if (weekday != -1) {
+                    for (int day = 1; day <= daysInMonth; day++) {
+                        LocalDate date = monthDate.withDayOfMonth(day);
+                        if (date.getDayOfWeek().getValue() % 7 == weekday) {
+                            dayColorMap.computeIfAbsent(day, k -> new ArrayList<>()).add(empColor);
+                        }
+                    }
                 }
-            } catch (Exception ignored) {}
+            }
         }
-        return days;
+        return dayColorMap;
+    }
+
+    
+    private int getDayIndex(String dayName) {
+        String[] dayNames = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+        for (int i = 0; i < dayNames.length; i++) {
+            if (dayNames[i].equalsIgnoreCase(dayName)) return i;
+        }
+        return -1;
     }
 
     public void refreshCalendar() {
