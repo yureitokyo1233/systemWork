@@ -11,7 +11,7 @@ import java.time.*;
 import java.util.*;
 import java.util.List;
 
-public class System extends JFrame {
+public class Systems extends JFrame {
 
     private final JTextField empIdField = new JTextField();
     private final JTextField nameField = new JTextField();
@@ -51,8 +51,8 @@ public class System extends JFrame {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-    public System() {
-        setTitle("Employee Management System");
+    public Systems() {
+        setTitle("OptimaHR");
         setMinimumSize(new Dimension(1000, 700));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
@@ -62,7 +62,7 @@ public class System extends JFrame {
         setContentPane(bgPanel);
 
         titleLabel = new JLabel("Employee Management System", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Segoe UI Semibold", Font.BOLD, 26));
+        titleLabel.setFont(new Font("Source Code Pro", Font.BOLD, 26));
         titleLabel.setOpaque(true);
         titleLabel.setBackground(new Color(19, 90, 180));
         titleLabel.setForeground(Color.WHITE);
@@ -79,7 +79,12 @@ public class System extends JFrame {
         JPanel viewPanel = new JPanel(null);
         viewPanel.setOpaque(false);
         String[] columns = {"EmpId", "Name", "Age", "Email", "Status", "Position", "HireDate", "AvailableDays", "Color", "Feedback"};
-        tableModel = new DefaultTableModel(columns, 0);
+        tableModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // All cells are not editable
+            }
+        };
         table = new JTable(tableModel);
 
         // Use striped rows for better office look
@@ -600,13 +605,21 @@ public class System extends JFrame {
                 }
             }
 
-            double tax = salary * 0.10;
+            double tax = (salary >= 19000) ? salary * 0.10 : 0.0;
             salaryTableModel.setValueAt(tax, i, 2);
 
             total += salary;
             count++;
         }
-        double budgetLeft = companyBudget - total - (total * 0.10);
+        // Calculate total tax for budget left
+        double totalTax = 0;
+        for (int i = 0; i < salaryTableModel.getRowCount(); i++) {
+            Object taxVal = salaryTableModel.getValueAt(i, 2);
+            if (taxVal instanceof Number) {
+                totalTax += ((Number) taxVal).doubleValue();
+            }
+        }
+        double budgetLeft = companyBudget - total - totalTax;
         if (budgetLeft < 0) {
             budgetLeftLabel.setForeground(Color.RED);
         } else {
@@ -799,7 +812,7 @@ public class System extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(System::new);
+        SwingUtilities.invokeLater(Systems::new);
     }
 
     // Background panel with vertical gradient for office feel
